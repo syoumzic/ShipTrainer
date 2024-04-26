@@ -1,5 +1,5 @@
 class Sky implements Drawable{
-  final color skyColor = #75b7dc;
+  final color skyColor = #000000;
   
   void update(){
     

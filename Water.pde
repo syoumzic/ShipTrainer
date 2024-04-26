@@ -1,40 +1,68 @@
+import peasy.*;
+
 class Water implements Drawable{
-  final int pointWidth = 100;
-  final int pointHeight = 100;
-  final color waterColor = #6ba0cc;
+  PeasyCam cam;
   
-  final int scale = 100;
+  int vertexWidth = 1000;
+  int vertexHeight = 1000;
+  color waterColor = #6ba0cc;
+  color strokeColor = #0D6CB7;
   
-  Point<Float>rotations = new Point<>(0f, 0f, 0f);
-  Point<Float>translations = new Point<>(0f, 0f, 0f);
+  int w = 5000;
+  int h = 5000;
+  
+  float angle = -2.6;
+  
+  Point3D<Integer>translations = new Point3D<Integer>(-1510, 1380, -100);
+  
+  private final int sclW = 100;
+  private final int sclH = 100;
+  float speed = 0.00f;
+  float smooth = 0.001f;
+  float waterHeight = 700f;
+  
+  Water(PApplet papplet){
+    cam = new PeasyCam(papplet, 400);
+  }
   
   void update(){
     
   }
   
-  void vertexC(int x, int y, int z){
-    vertex(x * scale, y * scale, z * scale); 
+  private void scaledVertex(int x, int y){
+    vertex(x * sclW, y * sclH, (int)(-scaledNoise(x, y) * waterHeight));
+  }
+  
+  private float scaledNoise(float x, float y){
+    return noise(x * sclW * smooth + frameCount * speed, y * sclH * smooth); 
   }
   
   void draw(){
-    translate(translations.x, translations.y, translations.z);
-    rotateX(rotations.x);
-    rotateY(rotations.y);
-    rotateZ(rotations.z);
+    //translate(translations.x, translations.y, translations.z);
+    //rotateX(angle);
+    float[] position = cam.getPosition();
+    pointLight(125, 125, 125, position[0], position[1], position[2]);
+    ambientLight(255, 255, 255);
     
-    //noStroke();
-    noFill();
-    //fill(waterColor);
+    noStroke();
+    fill(waterColor);
     
-    for(int i = 0; i < pointWidth - 1; i++){
-      beginShape(TRIANGLE_STRIP);
-      for(int j = 0; j < pointHeight; j++){
-        vertexC(i, 0, j);
-        vertexC(i+1, 0, j);
+    beginShape(TRIANGLE_STRIP);
+    for (int y = 0; y < vertexHeight; y++) {  
+      for (int x = 0; x <= vertexWidth; x++) {
+        scaledVertex(x, y);
+        scaledVertex(x, y+1);
       }
-      endShape();
+      
+      scaledVertex(vertexWidth, y+1);
+      
+      for (int x = vertexWidth; x >= 0; x--) {
+        scaledVertex(x, y+1);
+        scaledVertex(x, y+2);
+      }
+      
+      scaledVertex(0, y+2);
     }
-    
-    
+    endShape();   
   }
 }
