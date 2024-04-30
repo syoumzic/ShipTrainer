@@ -1,10 +1,11 @@
 import java.util.List;
+import processing.opengl.*;
 
 List<Drawable> gameObjects = new ArrayList<>();
 CustomServer server;
 
 void setup(){
-  size(1920, 1280, P3D);
+  size(1920, 1280, OPENGL);
   
   Sky sky = new Sky();
   Water water = new Water(this);
