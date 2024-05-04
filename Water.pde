@@ -1,65 +1,34 @@
 import peasy.*;
 
 class Water implements Drawable{
-  PeasyCam cam;
-  
+  private final int vertexAccuracy = 100;
+  private final float speed = 0.01f;
+  private final float smooth = 0.08f;
 
-  // color waterColor = #21BBFF;
-  // color secondWaterColor = #0F61A7;
-  // color waterColor = #000000;
-  // color secondWaterColor = #ffffff;
-  
-  final int vertexAccuracy = 100;
+  private final float scl;
 
-  int landscapeWidth = (int)(width * 4.1849);
-  int landscapeHeihgt = (int)(width * 10.0422);
-
-  private final float scl = landscapeWidth / vertexAccuracy;
-
-  int vertexWidth = ceil(landscapeWidth / scl);
-  int vertexHeight = ceil(landscapeHeihgt / scl);
+  private int vertexWidth;
+  private int vertexHeight;
   
-  float speed = 0.01f;
-  float smooth = 0.08f;
-  float waterHeight = 200f;
-  
-  Water(PApplet papplet){
-    cam = new PeasyCam(papplet, 400);
+  Water(World world){
+    vertexWidth = vertexAccuracy;
+    scl = (float)world.landscapeWidth / vertexWidth;
+    vertexHeight = ceil(world.landscapeHeihgt / scl);
   }
   
   void update(){
-    
+
   }
   
   private void scaledVertex(int x, int y){
-    // float value = sin(pow(1 - dist(x, y, vertexWidth/2f, vertexHeight/2f) / dist(0, 0, vertexWidth/2f, vertexHeight/2f), 3) * HALF_PI);
-    // fill(lerpColor(waterColor, secondWaterColor, value));
     vertex(x * scl , y * scl, 0);
   }
   
-  private float scaledNoise(float x, float y){
-    return noise(x * smooth, y * smooth, frameCount * speed); 
-  }
-
-  // void camera(float a, float b, float c, float d, float e, float f, int aa, int bb, int cc){
-  //   println(HALF_PI - atan2(sqrt(sq(a - d) + sq(b - e) + sq(c - f)) / width, 0.5));
+  // private float scaledNoise(float x, float y){
+  //   return noise(x * smooth, y * smooth, frameCount * speed); 
   // }
   
   void draw(){
-    camera(2.0815 * width, 4.1498 * width, 1.3398 * width, 2.0815 * width, 3.311 * width, 0.7858 * width, 0, 1, 0);
-    perspective(0.46156168, float(width)/float(height), 0.5, 10000);
-    
-    // translate(width/2 - landscapeWidth/2, 3.244 * width, -1.893 * width);
-    // rotateX(0.695);
-    
-    // pointLight(125, 125, 125, w/2, 0, -100);
-    //ambientLight(255, 255, 255);
-    
-    // noStroke();
-    // fill(waterColor);
-    // fill(#fa046c);
-    // rect(0, 0, width * 4.1849, width * 3.0422);
-
     stroke(0);
     fill(255);
     beginShape(TRIANGLES);
