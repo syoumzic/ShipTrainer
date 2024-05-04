@@ -1,6 +1,6 @@
 class Light implements Drawable{
     private final PVector position;
-    final int sunHeight = 1000;
+    private final int sunHeight = 1000;
 
     private final int red = 255;
     private final int green = 255;

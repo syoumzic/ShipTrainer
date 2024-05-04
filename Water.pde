@@ -16,10 +16,6 @@ class Water implements Drawable{
     vertexHeight = ceil(world.landscapeHeihgt / scl);
   }
   
-  void update(){
-
-  }
-  
   private void scaledVertex(int x, int y){
     vertex(x * scl , y * scl, 0);
   }

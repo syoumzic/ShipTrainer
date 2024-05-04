@@ -21,7 +21,7 @@ class World{
 
         fov = 0.46156168;
         aspect = (float)width / height;
-        zNear = 0.1;
+        zNear = 0.01;
         zFar = 10;
 
         gameObjects.add(new Water(this));

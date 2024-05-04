@@ -3,7 +3,7 @@ class Ship implements Drawable{
   PVector position;
 
   Ship(World world){
-    body = loadShape("asserts/ship.obj");
+    body = loadShape("asserts/ship/ship.obj");
     position = new PVector(world.landscapeWidth/2, world.landscapeHeihgt/2, 0);
   }
 
