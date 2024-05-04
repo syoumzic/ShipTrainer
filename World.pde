@@ -26,7 +26,9 @@ class World{
 
         gameObjects.add(new Water(this));
         gameObjects.add(new Light(this));
-        gameObjects.add(new Ship(this));
+        gameObjects.add(new Barrier(1.7, 1.92, 0));
+        gameObjects.add(new Barrier(2.36, 1.92, 0));
+        gameObjects.add(new Ship());
     }
 
     void draw(){
