@@ -5,6 +5,8 @@ class Water implements Drawable{
   private final float speed = 0.01f;
   private final float smooth = 0.08f;
 
+  private final color waterColor = #2389DA;
+
   private final float scl;
 
   private int vertexWidth;
@@ -25,8 +27,8 @@ class Water implements Drawable{
   // }
   
   void draw(){
-    stroke(0);
-    fill(255);
+    noStroke();
+    fill(waterColor);
     beginShape(TRIANGLES);
     for (int y = 0; y < vertexHeight-1; y++) {  
       for (int x = 0; x < vertexWidth-1; x++) {
