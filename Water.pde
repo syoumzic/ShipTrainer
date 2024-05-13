@@ -1,9 +1,10 @@
 import peasy.*;
 
 class Water implements Drawable{
-  private final int vertexAccuracy = 100;
-  private final float speed = 0.01f;
-  private final float smooth = 0.08f;
+  private final int vertexAccuracy;
+  private final float speed;
+  private final float smooth;
+  private final float waterHeight;
 
   private final color waterColor = #2389DA;
 
@@ -13,21 +14,30 @@ class Water implements Drawable{
   private int vertexHeight;
   
   Water(World world){
+    vertexAccuracy = 100;
+    speed = 0.01f;
+    smooth = 0.08f;
+    waterHeight = 0.03;
+
     vertexWidth = vertexAccuracy;
     scl = (float)world.landscapeWidth / vertexWidth;
     vertexHeight = ceil(world.landscapeHeihgt / scl);
   }
   
   private void scaledVertex(int x, int y){
-    vertex(x * scl , y * scl, 0);
+    vertex(x * scl, y * scl, 0);
   }
+
+  // private void scaledVertex(int x, int y){
+  //   vertex(x * scl, y * scl, scaledNoise(x, y));
+  // }
   
   // private float scaledNoise(float x, float y){
-  //   return noise(x * smooth, y * smooth, frameCount * speed); 
+  //   return noise(x * smooth, y * smooth, frameCount * speed) * waterHeight; 
   // }
   
   void draw(){
-    noStroke();
+    stroke(0);
     fill(waterColor);
     beginShape(TRIANGLES);
     for (int y = 0; y < vertexHeight-1; y++) {  

@@ -3,10 +3,10 @@ import java.util.List;
 class World{
     private final PVector eyePosition, lookAtPosition;
     private final List<Drawable> gameObjects = new ArrayList<>();
+    private final Ship ship;
 
     public final float landscapeWidth;
     public final float landscapeHeihgt;
-
     private final float fov;
     private final float aspect;
     private float zNear;
@@ -26,12 +26,24 @@ class World{
 
         gameObjects.add(new Water(this));
         gameObjects.add(new Light(this));
-        gameObjects.add(new Barrier(1.7, 1.92, 0));
-        gameObjects.add(new Barrier(2.36, 1.92, 0));
-        gameObjects.add(new Ship());
+
+        PShape barrierModel = loadShape("assets/barrier/barrier.obj");
+        gameObjects.add(new Barrier(barrierModel, 1.7, 1.92, 0));
+        gameObjects.add(new Barrier(barrierModel, 2.36, 1.92, 0));
+
+        PShape shipModel = loadShape("assets/ship/ship.obj");
+        gameObjects.add(ship = new Ship(shipModel));
+    }
+
+    void update(){
+        if(keyPressed){
+            ship.update();
+        }
     }
 
     void draw(){
+        update();
+        
         camera(eyePosition.x, eyePosition.y, eyePosition.z, lookAtPosition.x, lookAtPosition.y, lookAtPosition.z, 0, 1, 0);
         perspective(fov, aspect, zNear, zFar);
 

@@ -6,5 +6,14 @@ void setup(){
 }
 
 void draw(){
+  world.update();
   world.draw();
+}
+
+void keyPressed(){
+  Keyboard.keyPressed(keyCode);
+}
+
+void keyReleased(){
+  Keyboard.keyReleased(keyCode);
 }
