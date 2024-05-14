@@ -20,7 +20,7 @@ class Water implements Drawable{
     waterHeight = 0.03;
 
     vertexWidth = vertexAccuracy;
-    scl = (float)world.landscapeWidth / vertexWidth;
+    scl = (float)world.landscapeWidth / (vertexWidth-1);
     vertexHeight = ceil(world.landscapeHeihgt / scl);
   }
   
