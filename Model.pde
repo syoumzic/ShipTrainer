@@ -1,16 +1,16 @@
-class Model implements Drawable{
-    protected PVector position;
-    private PShape body;
-    
-    Model(String path, float x, float y, float z){
-        body = loadShape(path);
-        position = new PVector(x, y, z);
+abstract class Model implements Drawable{
+    private final PShape body;
+
+    Model(PShape body){
+        this.body = body;
     }
 
-    void draw(){
+    public abstract void transformations();
+
+    public void draw(){
         pushMatrix();
 
-        translate(position.x, position.y, position.z);
+        transformations();
         shape(body);
 
         popMatrix();
