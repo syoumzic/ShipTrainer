@@ -1,19 +1,23 @@
 class Ship extends Model {
   final float speed;
   final float velocitySpeed;
+  private final Manipulator manipulator;
 
   private float angle;
   private PVector velocity;
   private PVector position;
 
-  Ship(PShape body){
+  Ship(PShape body, Water water, Manipulator manipulator){
     super(body);
+
+    this.manipulator = manipulator;
 
     speed = 0.01;
     velocitySpeed = 0.01;
     angle = 0;
 
     position = new PVector(2.03529, 1.86403, 0);
+    water.splash(position.x, position.y);
     velocity = PVector.fromAngle(angle).mult(speed);
   }
 
@@ -22,21 +26,7 @@ class Ship extends Model {
     rotateZ(velocity.heading());
   }
 
-  void update() {
-    if(Keyboard.up()){
-      position.add(velocity);
-    }
-
-    else if(Keyboard.down()){
-      position.sub(velocity);
-    }
-
-    if (Keyboard.left()){
-      velocity.rotate(-velocitySpeed);
-    }
-
-    else if(Keyboard.right()) {
-      velocity.rotate(velocitySpeed);
-    }
+  void update(){
+    
   }
 }

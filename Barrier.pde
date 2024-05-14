@@ -2,9 +2,11 @@ class Barrier extends Model {
   private final PVector position;
   PShape body;
 
-  Barrier(PShape body, float x, float y, float z){
+  Barrier(PShape body, Water water, PVector position){
     super(body);
-    position = new PVector(x, y, z);
+
+    this.position = position;
+    water.splash(position.x, position.y);
   }
 
   void transformations(){

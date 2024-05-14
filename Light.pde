@@ -11,9 +11,11 @@ class Light implements Drawable{
     }
 
     void draw(){
-        lightFalloff(2, 0.001, 0.001);
-        for(PVector position : positions){
-            pointLight(red, green, blue, position.x, position.y, position.z);
-        }
+        // lightFalloff(2, 0.001, 0.001);
+        int i = 2;
+        pointLight(red, green, blue, positions[i].x, positions[i].y, positions[i].z);
+        
+        int j = 1;
+        pointLight(red, green, blue, positions[j].x, positions[j].y, positions[j].z);
     }
 }

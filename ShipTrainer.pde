@@ -1,19 +1,23 @@
 public World world;
+public Manipulator manipulator;
 
 void setup(){
   fullScreen(P3D);
-  world = new World();
+  manipulator = new Manipulator(this);
+  world = new World(manipulator);
 }
 
 void draw(){
+  if(!manipulator.connected()){
+    manipulator.reconnect(this);
+  }
+
   world.update();
   world.draw();
 }
 
-void keyPressed(){
-  Keyboard.keyPressed(keyCode);
-}
-
-void keyReleased(){
-  Keyboard.keyReleased(keyCode);
+@Override
+void exit(){
+  manipulator.exit();
+  super.exit();
 }
