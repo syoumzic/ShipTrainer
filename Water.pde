@@ -26,7 +26,7 @@ class Water implements Drawable{
   private int vertexWidth;
   private int vertexHeight;
 
-  private float vis = 0.001f;
+  private float vis = 0.01f;
   
   Point[][] points;
   float[][] waterHeights;
@@ -58,7 +58,7 @@ class Water implements Drawable{
 
     for(int i = -3; i < 4; i++){
       for(int j = -3; j < 4; j++){
-        float v=15.0f-i*i-j*j;
+        float v=10.0f-i*i-j*j;
         if(v<0.0f) v=0.0f;
         waterHeights[i+floorX+3][j+floorY+3]-=v*0.004f;
       }
@@ -79,7 +79,7 @@ class Water implements Drawable{
         waterHeightsBuffered[i][j]=((2.0f-vis)*waterHeights[i][j]-waterHeightsBuffered[i][j]*(1.0f-vis)+laplas);
       }
     }
-    noStroke();
+    stroke(#000000);
     fill(waterColor);
     for(int i = 1;i < vertexWidth-1; i++){
       beginShape(TRIANGLE_STRIP);

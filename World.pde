@@ -32,8 +32,8 @@ class World{
         gameObjects.add(water = new Water(this));
 
         PShape barrierModel = loadShape("assets/barrier/barrier.obj");
-        gameObjects.add(new Barrier(barrierModel, water, new PVector(1.7, 1.92, -1)));
-        gameObjects.add(new Barrier(barrierModel, water, new PVector(2.36, 1.92, -0.5)));
+        gameObjects.add(new Barrier(barrierModel, water, new PVector(1.7, 1.92, -0.2)));
+        gameObjects.add(new Barrier(barrierModel, water, new PVector(2.36, 1.92, -0.2)));
 
         PShape shipModel = loadShape("assets/ship/ship.obj");
         gameObjects.add(ship = new Ship(shipModel, water, manipulator));

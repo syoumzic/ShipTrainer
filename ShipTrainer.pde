@@ -18,7 +18,6 @@ void draw(){
 
 void mousePressed(){
   world.mousePressed();
-  println(mouseX, mouseY);
 }
 
 @Override
