@@ -16,6 +16,11 @@ void draw(){
   world.draw();
 }
 
+void mousePressed(){
+  world.mousePressed();
+  println(mouseX, mouseY);
+}
+
 @Override
 void exit(){
   manipulator.exit();

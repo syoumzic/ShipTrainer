@@ -6,6 +6,7 @@ class Ship extends Model {
   private float angle;
   private PVector velocity;
   private PVector position;
+  private float angleSpeed;
 
   Ship(PShape body, Water water, Manipulator manipulator){
     super(body);
@@ -27,6 +28,7 @@ class Ship extends Model {
   }
 
   void update(){
-    
+    PVector acceleration = manipulator.getAccelerations();
+    angleSpeed = acceleration.y / 255;
   }
 }

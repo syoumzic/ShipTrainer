@@ -19,7 +19,7 @@ class Manipulator{
         }
     }
 
-    public PVector getStickPositions(){
+    public PVector getAccelerations(){
         if(serial != null){
             serial.write((byte)0);
             while(serial.available() < 2);
