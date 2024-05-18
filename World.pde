@@ -6,6 +6,7 @@ class World{
     private final Ship ship;
     private final Water water;
 
+    public final float gravity;
 
     public final float landscapeWidth;
     public final float landscapeHeihgt;
@@ -14,47 +15,41 @@ class World{
     private float zNear;
     private float zFar;
 
-    World(Manipulator manipulator){
-        eyePosition = new PVector(2.0815, 4.1498, 1.3398);
-        lookAtPosition = new PVector(2.0815, 3.311, 0.7858);
+    World(PApplet papplet, Manipulator manipulator){
+        eyePosition = new PVector(2.09245, 4.1498, 1.3398);
+        lookAtPosition = new PVector(2.09245, 3.311, 0.7858);
 
         landscapeWidth = 4.1849;
         landscapeHeihgt = 3.0422;
 
+        gravity = 9.8;          //m/c^2
+
         fov = 0.46156168;
+        // fov = 2;
         aspect = (float)width / height;
         zNear = 0.01;
         zFar = 10;
 
-        Light light = new Light(this);
-        gameObjects.add(light);
-
+        gameObjects.add(new Light(this));
         gameObjects.add(water = new Water(this));
-
-        PShape barrierModel = loadShape("assets/barrier/barrier.obj");
-        gameObjects.add(new Barrier(barrierModel, water, new PVector(1.7, 1.92, -0.2)));
-        gameObjects.add(new Barrier(barrierModel, water, new PVector(2.36, 1.92, -0.2)));
-
-        PShape shipModel = loadShape("assets/ship/ship.obj");
-        gameObjects.add(ship = new Ship(shipModel, water, manipulator));
+        
+        gameObjects.add(new Barrier(water));
+        gameObjects.add(new Barrier(water));
+        gameObjects.add(ship = new Ship(water, this, manipulator));
     }
 
-    void update(){
-        ship.update();
-    }
+    public void draw(){
+        background(#acacac);
 
-    void draw(){
         camera(eyePosition.x, eyePosition.y, eyePosition.z, lookAtPosition.x, lookAtPosition.y, lookAtPosition.z, 0, 1, 0);
         perspective(fov, aspect, zNear, zFar);
-
-        background(0);
 
         for(Drawable gameObject : gameObjects){
             gameObject.draw(); 
         }
     }
 
-    void mousePressed(){
+    public void mousePressed(){
         water.splash(landscapeWidth/2, landscapeHeihgt/2);
     }
 }
