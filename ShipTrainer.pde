@@ -19,14 +19,20 @@ void mousePressed(){
   world.mousePressed();
 }
 
+void mouseWheel(MouseEvent event){
+  world.mouseWheel(event);
+}
+
 @Override
 void exit(){
   manipulator.exit();
   super.exit();
 }
 
-float traingaeArea(PVector a, PVector b, PVector c){
-    return 0.5 * abs((b.x - a.x)*(c.y - a.y) - (c.x - a.x)*(b.y - a.y));
+public <Type> void swap(Type a, Type b){
+  Type temp = b;
+  b = a;
+  a = temp;
 }
 
 PShape getShape(String name){

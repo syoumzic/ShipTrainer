@@ -10,10 +10,11 @@ class World{
 
     public final float landscapeWidth;
     public final float landscapeHeihgt;
-    private final float fov;
     private final float aspect;
     private float zNear;
     private float zFar;
+
+    private float fov;
 
     World(PApplet papplet, Manipulator manipulator){
         eyePosition = new PVector(2.09245, 4.1498, 1.3398);
@@ -51,5 +52,9 @@ class World{
 
     public void mousePressed(){
         water.splash(landscapeWidth/2, landscapeHeihgt/2);
+    }
+
+    public void mouseWheel(MouseEvent event) {
+        fov += event.getCount()/20f;
     }
 }

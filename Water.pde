@@ -86,11 +86,11 @@ class Water implements Drawable{
         v.normal[1]=waterHeights[i][j-1]-waterHeights[i][j+1];
 
         float laplas=(waterHeights[i-1][j] + waterHeights[i+1][j] + waterHeights[i][j+1] + waterHeights[i][j-1])*0.25 - waterHeights[i][j];
-        waterHeightsBuffered[i][j]=((2.0f-vis)*waterHeights[i][j]-waterHeightsBuffered[i][j]*(1.0f-vis)+laplas);
+        waterHeightsBuffered[i][j]=((2.0f-vis)*waterHeights[i][j]-waterHeightsBuffered[i][j]*(1.0f-vis)+laplas/2f);
       }
     }
 
-    stroke(#000000, 10);
+    stroke(0, 20);
     noFill();
     for(int i = 1;i < vertexWidth-1; i++){
       beginShape(TRIANGLE_STRIP);
