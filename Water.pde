@@ -15,10 +15,9 @@ class Point {
 
 class Water implements Drawable{
   private final int vertexAccuracy;
-  private final float speed;
-  private final float smooth;
   private final int splashRadius;
   public final float density;
+  
 
   private final color waterColor = #2389DA;
   private final float scl;
@@ -26,7 +25,8 @@ class Water implements Drawable{
   private int vertexWidth;
   private int vertexHeight;
 
-  private float vis = 0.01f;
+  private final float vis;
+  private final float dt;
   
   private Point[][] points;
   private float[][] waterHeights;
@@ -34,10 +34,10 @@ class Water implements Drawable{
   
   Water(World world){
     vertexAccuracy = 100;
-    speed = 0.01f;
-    smooth = 0.08f;
     splashRadius = 2;
     density = 1000;     //mg/m^2
+    vis = 0.01;
+    dt = 0.5;
 
     vertexWidth = vertexAccuracy;
     scl = (float)world.landscapeWidth / (vertexWidth-1);
@@ -57,8 +57,6 @@ class Water implements Drawable{
   public void splash(float x, float y){
     int nearX = (int)(x / scl);
     int nearY = (int)(y / scl);
-
-    
 
     for(int i = -splashRadius; i <= splashRadius; i++){
       for(int j = -splashRadius; j <= splashRadius; j++){
@@ -86,12 +84,13 @@ class Water implements Drawable{
         v.normal[1]=waterHeights[i][j-1]-waterHeights[i][j+1];
 
         float laplas=(waterHeights[i-1][j] + waterHeights[i+1][j] + waterHeights[i][j+1] + waterHeights[i][j-1])*0.25 - waterHeights[i][j];
-        waterHeightsBuffered[i][j]=((2.0f-vis)*waterHeights[i][j]-waterHeightsBuffered[i][j]*(1.0f-vis)+laplas/2f);
+        waterHeightsBuffered[i][j]=((2.0f-vis)*waterHeights[i][j]-waterHeightsBuffered[i][j]*(1.0f-vis)+laplas*dt);
       }
     }
 
-    stroke(0, 20);
+    stroke(0, 50);
     noFill();
+
     for(int i = 1;i < vertexWidth-1; i++){
       beginShape(TRIANGLE_STRIP);
       for(int j = 1;j < vertexHeight; j++){

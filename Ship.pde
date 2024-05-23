@@ -2,197 +2,145 @@ import java.util.Arrays;
 import java.lang.Math;
 
 class Ship implements Drawable {
-  private final Manipulator manipulator;
   private final Water water;
-  private final PShape body, frame;
+  private final PShape body;
+  private final Model frame;
   private final World world;
-  private final float maxSpeed;
   private final float dt;
+  private final float velocityAttenuation, angularAttenuation;
 
   private final float mass;
 
   private final float[][] J, invJ;
-  private final PVector[] axes = new PVector[]{new PVector(1, 0, 0), new PVector(0, 1, 0), new PVector(0, 0, 1)};
 
-  private PVector direction, velocity, acceleration, position, buoyantForce, angularVelocityAccumulate, angularVelocity;
+  private PVector angle, position, velocity, angularVelocity, accumulateForce, accumulateAngularVelcoity;
 
-  Ship(Water water, World world, Manipulator manipulator){
-    this.mass = 0.1; //kg
-    this.maxSpeed = 0.1;
+  Ship(World world, Water water){
+    this.mass = 0.05; //kg
 
-    this.position = new PVector();
-    this.direction = new PVector(1, 0, 0);
-    this.velocity = new PVector();
-    this.acceleration = new PVector();
-    this.buoyantForce = new PVector();
-    this.angularVelocity = new PVector();
-    this.angularVelocityAccumulate = new PVector();
-    this.dt = 1/240f;
+    this.angle = new PVector(0, 0, 0);
+    this.position = new PVector(0, 0, 0);
+    this.velocity = new PVector(0, 0, 0);
+    this.angularVelocity = new PVector(0, 0, 0);
 
-    J = new float[][]{{0.00231187, 0, 0},
-                      {0, 0.00043639, 0},
-                      {0, 0, 0.02072078}};
+    this.accumulateForce = new PVector();
+    this.accumulateAngularVelcoity = new PVector();
 
-    invJ = new float[][]{{432.54984909, 0, 0},
-                         {0, 2291.51392886, 0},
-                         {0, 0, 48.26072767}};
+    this.dt = 1/60f;
+    this.velocityAttenuation = 0.4f;
+    this.angularAttenuation = 0.4f;
+
+    J = new float[][]{{0.00207997, 0, 0},
+                      {0, 0.00020449, 0},
+                      {0, 0, 0.00223293}};
+
+    invJ = new float[][]{{480.77564892, 0, 0},
+                         {0, 4890.1503999, 0},
+                         {0, 0, 447.84175606}};
 
     this.world = world;
     this.water = water;
-    this.manipulator = manipulator;
 
-    this.frame = checkModel(getShape("frame"));
+    this.frame = new Model(getShape("frame"));
     this.body = getShape("ship");
-    translateModel(new PVector(2.03529, 1.86403, 0));
+    translateShip(new PVector(2.03529, 1.86403, -0.1));
 
     water.splash(position.x, position.y);
   }
 
-  private PShape checkModel(PShape shape){
-    for(PShape face : shape.getChildren()){
-
-      if(face.getVertexCount() != 3){
-        throw new UnsupportedOperationException();
-      }
-    }
-
-    return shape;
+  private void translateShip(PVector positionShift){
+    position.add(positionShift);
+    frame.translate(positionShift);
   }
 
-  private void translateModel(PVector shift){
-    position.add(shift);
-    body.translate(shift.x, shift.y, shift.z);
+  private void rotateShip(PVector angularShift){
+    angle.add(angularShift);
 
-    PVector v = new PVector();
-    for (PShape child : frame.getChildren()) {
-      for (int vi = 0; vi < child.getVertexCount(); vi++) {
-        child.getVertex(vi, v);
-        v.add(shift);
-        child.setVertex(vi, v.x, v.y, v.z);
-      }
-    }
-  }
-
-  private void rotateModel(PVector angularVelocity){
-    rotateVector(direction, angularVelocity);
-    
-    body.translate(-position.x, -position.y, -position.z);
-    body.rotateX(angularVelocity.x);
-    body.rotateY(angularVelocity.y);
-    body.rotateZ(angularVelocity.z);
-    body.translate(position.x, position.y, position.z);
-
-    PVector v = new PVector();
-    for (PShape child : frame.getChildren()) {
-      for (int vi = 0; vi < child.getVertexCount(); vi++) {
-        child.getVertex(vi, v);
-
-        v.sub(position);
-        rotateVector(v, angularVelocity);
-        v.add(position);
-
-        child.setVertex(vi, v.x, v.y, v.z);
-      }
-    } 
-  }
-
-  private void rotateVector(PVector v, PVector angle) {
-    Quaternion q = angleToQuaternion(angle);
-    v = q.rotateVector(v);
-  }
-
-  private Quaternion angleToQuaternion(PVector angle) {
-    float cx = cos(angle.x / 2);
-    float cy = cos(angle.y / 2);
-    float cz = cos(angle.z / 2);
-    float sx = sin(angle.x / 2);
-    float sy = sin(angle.y / 2);
-    float sz = sin(angle.z / 2);
-    
-    Quaternion q = new Quaternion(
-      sx * cy * cz + cx * sy * sz,
-      cx * sy * cz - sx * cy * sz,
-      cx * cy * sz + sx * sy * cz,
-      cx * cy * cz - sx * sy * sz
-    );
-    
-    return q;
+    frame.translate(new PVector(-position.x, -position.y, -position.z));
+    frame.rotate(angularShift);
+    frame.translate(new PVector(position.x, position.y, position.z));
   }
 
   private float traingaeArea(PVector a, PVector b, PVector c){
       return 0.5 * abs((b.x - a.x)*(c.y - a.y) - (c.x - a.x)*(b.y - a.y));
   }
 
-  private PVector avarage(PVector... vectors){
-    PVector avarage = new PVector();
-    for(PVector v : vectors){
-      avarage.x += v.x;
-      avarage.y += v.y;
-      avarage.z += v.z;
-    }
-    return avarage.div(vectors.length);
-  }
+  private void addFlowedFace(Face face){
+    // stroke(0);
+    // noFill();
+    // face.draw();
 
-  private void addWaterForce(PVector u, PVector v, PVector k, PVector normal){
-    PVector point = avarage(u, v, k);
-    float height = point.z - water.getHeightNear(point.x, point.y);
+    PVector center = avarage(face.vertexes[0], face.vertexes[1], face.vertexes[2]);
+    float height = center.z - water.getHeightNear(center.x, center.y);
     
-    PVector force = normal.mult(water.density)
-                          .mult(world.gravity)
-                          .mult(height)
-                          .mult(traingaeArea(u, v, k));
+    PVector force = face.normal.mult(water.density)
+                               .mult(world.gravity)
+                               .mult(height)
+                               .mult(traingaeArea(face.vertexes[0], face.vertexes[1], face.vertexes[2]));
 
     force.z = max(force.z, 0);
-    addForce(force, point);
+    force.x = 0;
+    force.y = 0;
+
+    addForce(force, center);
   }
 
   private void addForce(PVector force, PVector point){
-    buoyantForce.add(force);
+    // PVector a = point;
+    // PVector b = point.copy().add(force);
+    // line(a.x, a.y, a.z, b.x, b.y, b.z);
+    // pushMatrix();
+    // translate(b.x, b.y, b.z);
+    // box(0.001);
+    // popMatrix();
 
-    PVector M = force.cross(point);
-    angularVelocityAccumulate.add(M.sub(angularVelocity.cross(diagonalMult(angularVelocity, J))));
+    accumulateForce.add(force);
+
+    point.sub(position);
+    rotateVector(point, new PVector(-angle.x, -angle.y, -angle.z));
+
+    PVector M = point.cross(force);
+    PVector W = M.copy()
+                 .sub(angularVelocity.cross(diagonalMult(J, angularVelocity)));
+    
+    accumulateAngularVelcoity.add(W);
   }
 
-  private PVector diagonalMult(PVector a, float[][] matrix){
-    return new PVector(a.x * matrix[0][0], a.y * matrix[1][1], a.z * matrix[2][2]);
+  private PVector diagonalMult(float[][] matrix, PVector a){
+    return new PVector(matrix[0][0] * a.x, matrix[1][1] * a.y, matrix[2][2] * a.z);
   }
 
   private void drawTriangle(PVector u, PVector v, PVector k){
-    pushMatrix();
     noStroke();
-
     beginShape();
-        vertex(u.x, u.y, u.z + water.getHeightNear(u.x, u.y));
-        vertex(v.x, v.y, v.z + water.getHeightNear(v.x, v.y));
-        vertex(k.x, k.y, k.z + water.getHeightNear(k.x, k.y));
+        vertex(u.x, u.y, u.z);
+        vertex(v.x, v.y, v.z);
+        vertex(k.x, k.y, k.z);
     endShape();
-    popMatrix();
   }
 
   public void draw(){
-    fill(#00ff00);
+    accumulateForce.set(0, 0, 0);
+    accumulateAngularVelcoity.set(0, 0, 0);
 
-    buoyantForce.set(0, 0, 0);
-    angularVelocityAccumulate.set(0, 0, 0);
+    for(Face face : frame){
+      PVector[] vertexes = face.copy().vertexes;
 
-    for(PShape face : frame.getChildren()){
-      PVector[] vertex = new PVector[]{face.getVertex(0), face.getVertex(1), face.getVertex(2)};
-
-      for(PVector v: vertex){
+      for(PVector v: vertexes){
         v.z -= water.getHeightNear(v.x, v.y);
       }
 
-      Arrays.sort(vertex, (PVector a, PVector b) -> (a.z - b.z < 0 ? -1 : 1));
+      Integer[] indexes = new Integer[]{0, 1, 2};
+      Arrays.sort(indexes, (Integer ia, Integer ib) -> (vertexes[ia].z < vertexes[ib].z? -1 : 1));
 
-      PVector U = vertex[0];
-      PVector V = vertex[1];
-      PVector W = vertex[2];
+      PVector U = vertexes[indexes[0]];
+      PVector V = vertexes[indexes[1]];
+      PVector W = vertexes[indexes[2]];
 
-      PVector normal = avarage(face.getNormal(0), face.getNormal(1), face.getNormal(2));
+      face.vertexes = new PVector[]{face.vertexes[indexes[0]], face.vertexes[indexes[1]], face.vertexes[indexes[2]]};
 
       if(W.z < 0){
-        addWaterForce(U, V, W, normal);
-        // drawTriangle(L, M, H);
+        addFlowedFace(face);
       }
 
       else if(U.z > 0){
@@ -200,53 +148,61 @@ class Ship implements Drawable {
       }
 
       else if(V.z < 0){
-        PVector MIm = PVector.lerp(V, W, -V.z / (W.z - V.z));
-        PVector LIl = PVector.lerp(U, W, -U.z / (W.z - U.z));
+        PVector VW = PVector.lerp(face.vertexes[1], face.vertexes[2], -V.z / (W.z - V.z));
+        PVector UW = PVector.lerp(face.vertexes[0], face.vertexes[2], -U.z / (W.z - U.z));
 
-        addWaterForce(U, V, MIm, normal);
-        addWaterForce(LIl, MIm, U, normal);
-
-        // drawTriangle(L, M, MIm);
-        // drawTriangle(LIl, MIm, L);
+        addFlowedFace(new Face(face.vertexes[0], face.vertexes[1], VW, face.normal));
+        addFlowedFace(new Face(UW, VW, face.vertexes[0], face.normal));
       }
 
       else{
-        PVector LJm = PVector.lerp(U, V, -U.z / (V.z - U.z));
-        PVector LJl = PVector.lerp(U, W, -U.z / (W.z - U.z)); 
+        PVector UV = PVector.lerp(face.vertexes[0], face.vertexes[1], -U.z / (V.z - U.z));
+        PVector UW = PVector.lerp(face.vertexes[0], face.vertexes[2], -U.z / (W.z - U.z)); 
 
-        addWaterForce(U, LJl, LJm, normal);
-
-        // drawTriangle(L, LJl, LJm);
+        addFlowedFace(new Face(face.vertexes[0], UV, UW, face.normal));
       }
     }
 
 
     {
       PVector vectorGravity = new PVector(0, 0, -world.gravity);
-      PVector acceleration = buoyantForce.copy()
-                                         .div(mass)
-                                         .add(vectorGravity)
-                                         .mult(dt);
+      PVector acceleration = accumulateForce.copy()
+                                            .div(mass)
+                                            .add(vectorGravity)
+                                            .mult(dt);
 
-      velocity.add(acceleration);
-      
-      PVector move = velocity.copy()
-                             .mult(dt);
+      velocity.add(acceleration)
+              .mult(1 - velocityAttenuation);
 
-      translateModel(move);
+      PVector positionShift = velocity.copy()
+                                      .mult(dt);
+
+      // translateShip(positionShift);
     } 
 
     {
-      PVector angularAcceleration = diagonalMult(angularVelocityAccumulate, invJ).mult(dt);
+      PVector angularAcceleration = diagonalMult(invJ, accumulateAngularVelcoity).mult(dt)
+                                                                                 .mult(0.1);
 
-      angularVelocity.add(angularAcceleration);
+      angularVelocity.add(angularAcceleration)
+                     .mult(1 - angularAttenuation);
 
-      PVector angularMove = angularVelocity.copy()
-                                           .mult(dt);
-      rotateModel(angularMove);
+      PVector angularShift = angularVelocity.copy()
+                                            .mult(dt);
+      
+      rotateShip(new PVector(0.01, 0, 0));
+      rotateShip(new PVector(0, 0.01, 0));
+      rotateShip(new PVector(0, 0, 0.01));
     }
 
-    println(position, direction);
-    shape(body);
+    frame.draw();
+
+    pushMatrix();
+      translate(position.x, position.y, position.z);
+      rotateX(angle.x);
+      rotateY(angle.y);
+      rotateZ(angle.z);
+      shape(body);
+    popMatrix();
   }
 }
