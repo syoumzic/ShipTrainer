@@ -2,16 +2,16 @@ public World world;
 public Manipulator manipulator;
 
 public void setup(){
-  fullScreen(P3D);
+  size(1280, 720, P3D);
   manipulator = new Manipulator(this);
+  manipulator.start();
   world = new World(this, manipulator);
 }
 
 public void draw(){
-  // if(!manipulator.connected()){
-  //   manipulator.reconnect(this);
-  // }
-
+   if(!manipulator.connected()){
+     manipulator.reconnect(this);
+   }
   world.draw();
 }
 

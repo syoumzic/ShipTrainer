@@ -1,7 +1,8 @@
 import java.util.Arrays;
 import java.lang.Math;
+import java.beans.*;
 
-class Ship implements Drawable {
+class Ship implements Drawable, PropertyChangeListener{
   private final Water water;
   private final PShape body;
   private final Model frame;
@@ -13,7 +14,7 @@ class Ship implements Drawable {
 
   private final float[][] J, invJ;
 
-  private PVector angle, position, velocity, angularVelocity, accumulateForce, accumulateAngularVelcoity;
+  private PVector angle, enginePosition, position, velocity, angularVelocity, accumulateForce, accumulateAngularVelcoity;
 
   Ship(World world, Water water){
     this.mass = 0.05; //kg
@@ -22,6 +23,7 @@ class Ship implements Drawable {
     this.position = new PVector(0, 0, 0);
     this.velocity = new PVector(0, 0, 0);
     this.angularVelocity = new PVector(0, 0, 0);
+    this.enginePosition = new PVector(-0.4, 0, 0);
 
     this.accumulateForce = new PVector();
     this.accumulateAngularVelcoity = new PVector();
@@ -48,8 +50,24 @@ class Ship implements Drawable {
     water.splash(position.x, position.y);
   }
 
+  public void propertyChange(PropertyChangeEvent evt) {
+    Manipulator manipulator = (Manipulator) evt.getSource();
+    PVector manipulatorInput = manipulator.getInput();
+
+    PVector acrossForce = new PVector(map(manipulatorInput.x, 0, 255, 0, 20), 0, 0);
+    rotateVector(acrossForce, angle);
+
+    PVector verticalForce = new PVector(map(manipulatorInput.y, 0, 255, -20, 20), 0, 0);
+    rotateVector(verticalForce, angle);
+    
+    addForce(acrossForce, enginePosition);
+    addForce(verticalForce, enginePosition);
+    println("input event");
+  }
+
   private void translateShip(PVector positionShift){
     position.add(positionShift);
+    enginePosition.add(positionShift);
     frame.translate(positionShift);
   }
 
@@ -59,6 +77,10 @@ class Ship implements Drawable {
     frame.translate(new PVector(-position.x, -position.y, -position.z));
     frame.rotate(angularShift);
     frame.translate(new PVector(position.x, position.y, position.z));
+
+    enginePosition.sub(position);
+    rotateVector(enginePosition, angularShift);
+    enginePosition.add(position);
   }
 
   private float traingaeArea(PVector a, PVector b, PVector c){
@@ -85,6 +107,7 @@ class Ship implements Drawable {
     addForce(force, center);
   }
 
+  //force задана в ск1 point тоже
   private void addForce(PVector force, PVector point){
     // PVector a = point;
     // PVector b = point.copy().add(force);
@@ -98,6 +121,7 @@ class Ship implements Drawable {
 
     point.sub(position);
     rotateVector(point, new PVector(-angle.x, -angle.y, -angle.z));
+    rotateVector(force, new PVector(-angle.x, -angle.y, -angle.z));
 
     PVector M = point.cross(force);
     PVector W = M.copy()
@@ -177,7 +201,7 @@ class Ship implements Drawable {
       PVector positionShift = velocity.copy()
                                       .mult(dt);
 
-      // translateShip(positionShift);
+      translateShip(positionShift);
     } 
 
     {
@@ -189,20 +213,11 @@ class Ship implements Drawable {
 
       PVector angularShift = angularVelocity.copy()
                                             .mult(dt);
-      
-      rotateShip(new PVector(0.01, 0, 0));
-      rotateShip(new PVector(0, 0.01, 0));
-      rotateShip(new PVector(0, 0, 0.01));
+
+      rotateVector(angularShift, angle);
+      rotateShip(angularShift);
     }
 
     frame.draw();
-
-    pushMatrix();
-      translate(position.x, position.y, position.z);
-      rotateX(angle.x);
-      rotateY(angle.y);
-      rotateZ(angle.z);
-      shape(body);
-    popMatrix();
   }
 }

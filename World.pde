@@ -37,6 +37,8 @@ class World{
         gameObjects.add(new Barrier(water));
         gameObjects.add(new Barrier(water));
         gameObjects.add(ship = new Ship(this, water));
+        
+        manipulator.addPropertyChangeListener(ship);
     }
 
     public void draw(){
