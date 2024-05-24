@@ -8,25 +8,28 @@ class Ship implements Drawable, PropertyChangeListener{
   private final Model frame;
   private final World world;
   private final float dt;
+  private final float thrustForceValue;
   private final float velocityAttenuation, angularAttenuation;
 
   private final float mass;
 
   private final float[][] J, invJ;
 
-  private PVector angle, enginePosition, position, velocity, angularVelocity, accumulateForce, accumulateAngularVelcoity;
-
+  private PVector angle, enginePosition, position, velocity, angularVelocity, accumulateForce, accumulateAngularVelocity;
+  Force thrust;
   Ship(World world, Water water){
-    this.mass = 0.05; //kg
+    this.mass = 0.1; //kg
+    this.thrustForceValue = 1; //N
 
     this.angle = new PVector(0, 0, 0);
     this.position = new PVector(0, 0, 0);
     this.velocity = new PVector(0, 0, 0);
     this.angularVelocity = new PVector(0, 0, 0);
     this.enginePosition = new PVector(-0.4, 0, 0);
+    this.thrust = new Force();
 
     this.accumulateForce = new PVector();
-    this.accumulateAngularVelcoity = new PVector();
+    this.accumulateAngularVelocity = new PVector();
 
     this.dt = 1/60f;
     this.velocityAttenuation = 0.4f;
@@ -47,22 +50,18 @@ class Ship implements Drawable, PropertyChangeListener{
     this.body = getShape("ship");
     translateShip(new PVector(2.03529, 1.86403, -0.1));
 
-    water.splash(position.x, position.y);
+    water.splash(position.x, position.y, 5);
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
     Manipulator manipulator = (Manipulator) evt.getSource();
     PVector manipulatorInput = manipulator.getInput();
 
-    PVector acrossForce = new PVector(map(manipulatorInput.x, 0, 255, 0, 20), 0, 0);
+    PVector acrossForce = new PVector(map(manipulatorInput.y, 0, 255, -thrustForceValue, thrustForceValue), 0, 0);
     rotateVector(acrossForce, angle);
-
-    PVector verticalForce = new PVector(map(manipulatorInput.y, 0, 255, -20, 20), 0, 0);
-    rotateVector(verticalForce, angle);
+    rotateVector(acrossForce, new PVector(0, 0, map(manipulatorInput.x-20, 0, 255, -0.1, 0.1)));
     
-    addForce(acrossForce, enginePosition);
-    addForce(verticalForce, enginePosition);
-    println("input event");
+    this.thrust = new Force(enginePosition, acrossForce);
   }
 
   private void translateShip(PVector positionShift){
@@ -83,7 +82,7 @@ class Ship implements Drawable, PropertyChangeListener{
     enginePosition.add(position);
   }
 
-  private float traingaeArea(PVector a, PVector b, PVector c){
+  private float triangleArea(PVector a, PVector b, PVector c){
       return 0.5 * abs((b.x - a.x)*(c.y - a.y) - (c.x - a.x)*(b.y - a.y));
   }
 
@@ -92,30 +91,30 @@ class Ship implements Drawable, PropertyChangeListener{
     // noFill();
     // face.draw();
 
-    PVector center = avarage(face.vertexes[0], face.vertexes[1], face.vertexes[2]);
+    PVector center = average(face.vertexes[0], face.vertexes[1], face.vertexes[2]);
     float height = center.z - water.getHeightNear(center.x, center.y);
     
     PVector force = face.normal.mult(water.density)
                                .mult(world.gravity)
                                .mult(height)
-                               .mult(traingaeArea(face.vertexes[0], face.vertexes[1], face.vertexes[2]));
+                               .mult(triangleArea(face.vertexes[0], face.vertexes[1], face.vertexes[2]));
 
     force.z = max(force.z, 0);
     force.x = 0;
     force.y = 0;
 
-    addForce(force, center);
+    addForce(center, force);
   }
 
   //force задана в ск1 point тоже
-  private void addForce(PVector force, PVector point){
-    // PVector a = point;
-    // PVector b = point.copy().add(force);
-    // line(a.x, a.y, a.z, b.x, b.y, b.z);
-    // pushMatrix();
-    // translate(b.x, b.y, b.z);
-    // box(0.001);
-    // popMatrix();
+  private void addForce(PVector point, PVector force){
+    PVector a = point.copy();
+    PVector b = point.copy().add(force);
+    line(a.x, a.y, a.z, b.x, b.y, b.z);
+    pushMatrix();
+    translate(b.x, b.y, b.z);
+    box(0.001);
+    popMatrix();
 
     accumulateForce.add(force);
 
@@ -127,7 +126,7 @@ class Ship implements Drawable, PropertyChangeListener{
     PVector W = M.copy()
                  .sub(angularVelocity.cross(diagonalMult(J, angularVelocity)));
     
-    accumulateAngularVelcoity.add(W);
+    accumulateAngularVelocity.add(W);
   }
 
   private PVector diagonalMult(float[][] matrix, PVector a){
@@ -145,7 +144,7 @@ class Ship implements Drawable, PropertyChangeListener{
 
   public void draw(){
     accumulateForce.set(0, 0, 0);
-    accumulateAngularVelcoity.set(0, 0, 0);
+    accumulateAngularVelocity.set(0, 0, 0);
 
     for(Face face : frame){
       PVector[] vertexes = face.copy().vertexes;
@@ -187,7 +186,9 @@ class Ship implements Drawable, PropertyChangeListener{
       }
     }
 
-
+    addForce(this.thrust.point, this.thrust.force);
+    println(this.thrust.point, this.thrust.force);
+    
     {
       PVector vectorGravity = new PVector(0, 0, -world.gravity);
       PVector acceleration = accumulateForce.copy()
@@ -205,7 +206,7 @@ class Ship implements Drawable, PropertyChangeListener{
     } 
 
     {
-      PVector angularAcceleration = diagonalMult(invJ, accumulateAngularVelcoity).mult(dt)
+      PVector angularAcceleration = diagonalMult(invJ, accumulateAngularVelocity).mult(dt)
                                                                                  .mult(0.1);
 
       angularVelocity.add(angularAcceleration)

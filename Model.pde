@@ -14,7 +14,7 @@ public class Model implements Iterable<Face>{
                 throw new IllegalArgumentException("Invalid frame model");
 
             this.faces[i] = new Face(vertexes.getVertex(0), vertexes.getVertex(1), vertexes.getVertex(2),
-                                     avarage(vertexes.getNormal(0), vertexes.getNormal(1), vertexes.getNormal(2)));
+                                     average(vertexes.getNormal(0), vertexes.getNormal(1), vertexes.getNormal(2)));
         }
     }
 

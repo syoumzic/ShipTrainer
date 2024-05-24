@@ -5,7 +5,7 @@ public void setup(){
   size(1280, 720, P3D);
   manipulator = new Manipulator(this);
   manipulator.start();
-  world = new World(this, manipulator);
+  world = new World(manipulator);
 }
 
 public void draw(){
@@ -34,26 +34,26 @@ public PShape getShape(String name){
 }
 
 public void rotateVector(PVector vector, PVector angle) {
-    Quaterion queatrionX = new Quaterion(angle.x, new PVector(1, 0, 0));
-    Quaterion queatrionY = new Quaterion(angle.y, new PVector(0, 1, 0));
-    Quaterion queatrionZ = new Quaterion(angle.z, new PVector(0, 0, 1));
+    Quaternion quaternionX = new Quaternion(angle.x, new PVector(1, 0, 0));
+    Quaternion quaternionY = new Quaternion(angle.y, new PVector(0, 1, 0));
+    Quaternion quaternionZ = new Quaternion(angle.z, new PVector(0, 0, 1));
 
-    Quaterion point = new Quaterion(vector);
+    Quaternion point = new Quaternion(vector);
     
-    point = queatrionX.H(point).H(queatrionX.conjugate());
-    point = queatrionY.H(point).H(queatrionY.conjugate());
-    point = queatrionZ.H(point).H(queatrionZ.conjugate());
+    point = quaternionX.H(point).H(quaternionX.conjugate());
+    point = quaternionY.H(point).H(quaternionY.conjugate());
+    point = quaternionZ.H(point).H(quaternionZ.conjugate());
 
-    PVector modyfied = point.toVector();
-    vector.set(modyfied.x, modyfied.y, modyfied.z);
+    PVector modified = point.toVector();
+    vector.set(modified.x, modified.y, modified.z);
 }
 
-public PVector avarage(PVector... vectors){
-    PVector avarage = new PVector();
+public PVector average(PVector... vectors){
+    PVector average = new PVector();
     for(PVector v : vectors){
-      avarage.x += v.x;
-      avarage.y += v.y;
-      avarage.z += v.z;
+      average.x += v.x;
+      average.y += v.y;
+      average.z += v.z;
     }
-    return avarage.div(vectors.length);
+    return average.div(vectors.length);
 }

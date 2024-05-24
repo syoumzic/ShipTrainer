@@ -9,19 +9,19 @@ class World{
     public final float gravity;
 
     public final float landscapeWidth;
-    public final float landscapeHeihgt;
+    public final float landscapeHeight;
     private final float aspect;
     private float zNear;
     private float zFar;
 
     private float fov;
 
-    World(PApplet papplet, Manipulator manipulator){
+    World(Manipulator manipulator){
         eyePosition = new PVector(2.09245, 4.1498, 1.3398);
         lookAtPosition = new PVector(2.09245, 3.311, 0.7858);
 
         landscapeWidth = 4.1849;
-        landscapeHeihgt = 3.0422;
+        landscapeHeight = 3.0422;
 
         gravity = 9.8;          //m/c^2
 
@@ -53,7 +53,7 @@ class World{
     }
 
     public void mousePressed(){
-        water.splash(landscapeWidth/2, landscapeHeihgt/2);
+        water.splash(landscapeWidth/2, landscapeHeight/2, 10);
     }
 
     public void mouseWheel(MouseEvent event) {

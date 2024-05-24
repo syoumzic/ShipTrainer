@@ -41,7 +41,7 @@ class Water implements Drawable{
 
     vertexWidth = vertexAccuracy;
     scl = (float)world.landscapeWidth / (vertexWidth-1);
-    vertexHeight = ceil(world.landscapeHeihgt / scl);
+    vertexHeight = ceil(world.landscapeHeight / scl);
 
     points = new Point[vertexWidth][vertexHeight];
     waterHeights = new float[vertexWidth][vertexHeight];
@@ -54,7 +54,7 @@ class Water implements Drawable{
     }
   }
 
-  public void splash(float x, float y){
+  public void splash(float x, float y, float value){
     int nearX = (int)(x / scl);
     int nearY = (int)(y / scl);
 
@@ -65,7 +65,7 @@ class Water implements Drawable{
 
         if(splashX < 0 || splashX >= vertexWidth || splashY < 0 || splashY >= vertexHeight) continue;
 
-        float v=10.0f-i*i-j*j;
+        float v=value-i*i-j*j;
         if(v<0.0f) v=0.0f;
 
         waterHeights[i+nearX+3][j+nearY+3]-=v*0.004f;

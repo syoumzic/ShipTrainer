@@ -1,16 +1,21 @@
 import processing.serial.*;
 import java.lang.Thread;
 import java.beans.PropertyChangeSupport;
+import java.lang.ThreadDeath;
 
 class Manipulator extends Thread{
+    private boolean stop = false;
     private Serial serial = null;
     private final PropertyChangeSupport changeSupport;
+    PApplet pApplet;
     PVector input;
 
-    Manipulator(PApplet papplet){
+    final int maxTimeConnected = 100;
+
+    Manipulator(PApplet pApplet){
+        this.pApplet = pApplet;
+        this.input = new PVector();
         changeSupport = new PropertyChangeSupport(this);
-        input = new PVector(127, 127);
-        reconnect(papplet);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener){
@@ -25,23 +30,27 @@ class Manipulator extends Thread{
         return serial != null;
     }
 
-    public void reconnect(PApplet papplet){
+    public void reconnect(PApplet pApplet){
         String[] ports = Serial.list();
         
         if(ports.length > 0){
-            serial = new Serial(papplet, ports[ports.length - 1], 115200);
+            try{
+                serial = new Serial(pApplet, ports[ports.length - 1], 115200);
+                println("successfully connected");
+            }catch(RuntimeException e){
+                println("port busy");
+            }
         }
-        println("---------");
-        println(ports);
-        println("---------");
     }
 
     public void run(){
-        while(true){
-            if(serial != null){
+        while(!stop){
+            if(!connected()){
+                reconnect(pApplet);
+            }
+            else{
                 serial.write((byte)0);
-                while(serial.available() < 2);
-
+                
                 int nx = serial.read();
                 int ny = serial.read();
 
@@ -53,21 +62,11 @@ class Manipulator extends Thread{
         }
     }
 
-    public PVector getAccelerations(){
-        if(serial != null){
-            while(serial.available() < 2){
-                serial.write((byte)0);
-            }
-            return new PVector(serial.read(), serial.read());
-        }
-        else {
-            return new PVector(0, 0);
-        }
-    }
-
     public void exit(){
         if(serial != null){
             serial.stop();
         }
+
+        stop = true;
     }
 }

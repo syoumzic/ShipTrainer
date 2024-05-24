@@ -23,8 +23,8 @@ public class Face{
     }
 
     public void draw(){
-        fill(#ffffff);
-        stroke(#000000);
+        noFill();
+        stroke(#000000, 20);
         beginShape();
         {
             vertex(vertexes[0].x, vertexes[0].y, vertexes[0].z);
