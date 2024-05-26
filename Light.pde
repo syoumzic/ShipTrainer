@@ -1,7 +1,7 @@
 class Light implements Drawable{
     private PVector[] positions;
 
-    Light(World world){
+    Light(){
         positions = new PVector[]{new PVector(3.99, 0.02, 2.09), new PVector(0.12, 0.02, 2.09), new PVector(2.09, 5.88, 4.02)};
     }
 

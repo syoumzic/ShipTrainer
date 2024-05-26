@@ -1,8 +1,8 @@
-class Barrier implements Drawable {
+public class Barrier implements Drawable {
   private PVector[] positions;
   private final PShape body;
 
-  Barrier(Water water){
+  public Barrier(){
     this.body = getShape("barrier");
     this.positions = new PVector[]{new PVector(1.7, 1.92, -0.2), new PVector(2.36, 1.92, -0.2)};
   }

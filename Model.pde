@@ -2,34 +2,28 @@ import java.util.Iterator;
 import java.lang.Iterable;
 
 public class Model implements Iterable<Face>{
-    private Face[] faces;
+    private List<Face> faces;
     
-    public Model(PShape shape){
-        this.faces = new Face[shape.getChildCount()];
+    public Model(PShape shapes){
+        this.faces = new ArrayList<Face>(shapes.getChildCount());
 
-        for(int i = 0; i < shape.getChildCount(); i++){
-            PShape vertexes = shape.getChild(i);
-
-            if(vertexes.getVertexCount() != 3)
-                throw new IllegalArgumentException("Invalid frame model");
-
-            this.faces[i] = new Face(vertexes.getVertex(0), vertexes.getVertex(1), vertexes.getVertex(2),
-                                     average(vertexes.getNormal(0), vertexes.getNormal(1), vertexes.getNormal(2)));
+        for(PShape shape : shapes.getChildren()){
+            this.faces.add(new Face(shape));
         }
     }
 
     @Override
     public Iterator<Face>iterator(){
-        return new PVectorIterator();
+        return faces.iterator();
     }
 
-    public void translate(PVector positionShift){
+    public void translate(Vector positionShift){
         for(Face face: faces){
             face.translate(positionShift);
         }
     }
 
-    public void rotate(PVector angularShift){
+    public void rotate(Vector angularShift){
         for(Face face: faces){
             face.rotate(angularShift);
         }
@@ -38,20 +32,6 @@ public class Model implements Iterable<Face>{
     public void draw(){
         for(Face face: faces){
             face.draw();
-        }
-    }
-
-    class PVectorIterator implements Iterator<Face>{
-        private int index = 0;
-
-        @Override
-        boolean hasNext(){
-            return index < faces.length;
-        }
-
-        @Override
-        Face next(){
-            return Model.this.faces[index++].copy();
         }
     }
 }

@@ -1,7 +1,7 @@
 public class Quaternion {
   float w, x, y, z;
 
-  public Quaternion(float angle, PVector axes){
+  public Quaternion(float angle, Vector axes){
     this.w = cos(angle/2);
 
     float s = sin(angle/2);
@@ -10,7 +10,7 @@ public class Quaternion {
     this.z = s*axes.z;
   }
 
-  public Quaternion(PVector vector){
+  public Quaternion(Vector vector){
     this.w = 0;
     this.x = vector.x;
     this.y = vector.y;
@@ -32,8 +32,8 @@ public class Quaternion {
                         ); 
   }
 
-  public PVector toVector(){
-    return new PVector(x, y, z);
+  public Vector toVector(){
+    return new Vector(x, y, z);
   }
 
   private Quaternion conjugate(){

@@ -8,13 +8,12 @@ class Manipulator extends Thread{
     private Serial serial = null;
     private final PropertyChangeSupport changeSupport;
     PApplet pApplet;
-    PVector input;
+    int nx, ny;
 
     final int maxTimeConnected = 100;
 
     Manipulator(PApplet pApplet){
         this.pApplet = pApplet;
-        this.input = new PVector();
         changeSupport = new PropertyChangeSupport(this);
     }
 
@@ -22,8 +21,12 @@ class Manipulator extends Thread{
         changeSupport.addPropertyChangeListener(listener);
     }
 
-    public PVector getInput(){
-        return input;
+    public int getNx(){
+        return nx;
+    }
+    
+    public int getNy(){
+        return ny;
     }
 
     public boolean connected(){
@@ -51,12 +54,11 @@ class Manipulator extends Thread{
             else{
                 serial.write((byte)0);
                 
-                int nx = serial.read();
-                int ny = serial.read();
+                ny = serial.read();
+                nx = serial.read();
 
                 if(ny == -1) continue;
                 
-                input.set(nx, ny);
                 changeSupport.firePropertyChange("getInput", null, null);
             }
         }

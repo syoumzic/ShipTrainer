@@ -3,37 +3,35 @@ import java.lang.Math;
 import java.beans.*;
 
 class Ship implements Drawable, PropertyChangeListener{
-  private final Water water;
-  private final PShape body;
-  private final Model frame;
-  private final World world;
+  private final float mass;
   private final float dt;
   private final float thrustForceValue;
   private final float velocityAttenuation, angularAttenuation;
 
-  private final float mass;
-
+  private final Water water;
+  private final PShape body;
+  private final Model frame;
+  private final World world;
+  
   private final float[][] J, invJ;
 
-  private PVector angle, enginePosition, position, velocity, angularVelocity, accumulateForce, accumulateAngularVelocity;
+  private Vector angle, enginePosition, position, velocity, angularVelocity, accumulateForce, accumulateRotations;
   Force thrust;
+
   Ship(World world, Water water){
     this.mass = 0.1; //kg
     this.thrustForceValue = 1; //N
-
-    this.angle = new PVector(0, 0, 0);
-    this.position = new PVector(0, 0, 0);
-    this.velocity = new PVector(0, 0, 0);
-    this.angularVelocity = new PVector(0, 0, 0);
-    this.enginePosition = new PVector(-0.4, 0, 0);
-    this.thrust = new Force();
-
-    this.accumulateForce = new PVector();
-    this.accumulateAngularVelocity = new PVector();
-
     this.dt = 1/60f;
     this.velocityAttenuation = 0.4f;
     this.angularAttenuation = 0.4f;
+
+    this.angle = new Vector(0, 0, 0);
+    this.position = new Vector(0, 0, 0);
+    this.velocity = new Vector(0, 0, 0);
+    this.angularVelocity = new Vector(0, 0, 0);
+    this.enginePosition = new Vector(-0.02, 0, 0);
+    
+    this.thrust = new Force();
 
     J = new float[][]{{0.00207997, 0, 0},
                       {0, 0.00020449, 0},
@@ -48,177 +46,155 @@ class Ship implements Drawable, PropertyChangeListener{
 
     this.frame = new Model(getShape("frame"));
     this.body = getShape("ship");
-    translateShip(new PVector(2.03529, 1.86403, -0.1));
+    translateShip(new Vector(2.03529, 1.86403, -0.05));
 
     water.splash(position.x, position.y, 5);
   }
 
-  public void propertyChange(PropertyChangeEvent evt) {
-    Manipulator manipulator = (Manipulator) evt.getSource();
-    PVector manipulatorInput = manipulator.getInput();
-
-    PVector acrossForce = new PVector(map(manipulatorInput.y, 0, 255, -thrustForceValue, thrustForceValue), 0, 0);
-    rotateVector(acrossForce, angle);
-    rotateVector(acrossForce, new PVector(0, 0, map(manipulatorInput.x-20, 0, 255, -0.1, 0.1)));
-    
+  private void engineUpdate(){
+    addForce(thrust.point, thrust.force);
+  }
+  
+  private void applyThrustForce(float nx, float ny){
+    float acrossLength = map(ny, 160, 255, 0, thrustForceValue);
+    Vector acrossForce = VectorX(acrossLength).rotate(angle);
     this.thrust = new Force(enginePosition, acrossForce);
   }
+  
+  public void propertyChange(PropertyChangeEvent evt) {
+    Manipulator manipulator = (Manipulator) evt.getSource();
+    applyThrustForce(manipulator.getNx(), manipulator.getNy());
+  }
 
-  private void translateShip(PVector positionShift){
-    position.add(positionShift);
-    enginePosition.add(positionShift);
+  private void translateShip(Vector positionShift){
+    position = position.add(positionShift);
+    enginePosition = enginePosition.add(positionShift);
     frame.translate(positionShift);
   }
 
-  private void rotateShip(PVector angularShift){
-    angle.add(angularShift);
+  private void rotateShip(Vector angularShift){
+    angle = angle.add(angularShift);
 
-    frame.translate(new PVector(-position.x, -position.y, -position.z));
+    frame.translate(new Vector(-position.x, -position.y, -position.z));
     frame.rotate(angularShift);
-    frame.translate(new PVector(position.x, position.y, position.z));
+    frame.translate(new Vector(position.x, position.y, position.z));
 
-    enginePosition.sub(position);
-    rotateVector(enginePosition, angularShift);
-    enginePosition.add(position);
+    enginePosition = enginePosition.sub(position)
+                                   .rotate(angularShift)
+                                   .add(position);
   }
 
-  private float triangleArea(PVector a, PVector b, PVector c){
-      return 0.5 * abs((b.x - a.x)*(c.y - a.y) - (c.x - a.x)*(b.y - a.y));
-  }
-
-  private void addFlowedFace(Face face){
-    // stroke(0);
-    // noFill();
-    // face.draw();
-
-    PVector center = average(face.vertexes[0], face.vertexes[1], face.vertexes[2]);
-    float height = center.z - water.getHeightNear(center.x, center.y);
-    
-    PVector force = face.normal.mult(water.density)
-                               .mult(world.gravity)
-                               .mult(height)
-                               .mult(triangleArea(face.vertexes[0], face.vertexes[1], face.vertexes[2]));
-
-    force.z = max(force.z, 0);
-    force.x = 0;
-    force.y = 0;
-
-    addForce(center, force);
+  private void accumulateReset(){  
+    accumulateForce = new Vector();
+    accumulateRotations = new Vector();
   }
 
   //force задана в ск1 point тоже
-  private void addForce(PVector point, PVector force){
-    PVector a = point.copy();
-    PVector b = point.copy().add(force);
-    line(a.x, a.y, a.z, b.x, b.y, b.z);
-    pushMatrix();
-    translate(b.x, b.y, b.z);
-    box(0.001);
-    popMatrix();
+  private void addForce(Vector point, Vector force){
+    new Force(point, force).draw();
 
-    accumulateForce.add(force);
+    accumulateForce = accumulateForce.add(force);
 
-    point.sub(position);
-    rotateVector(point, new PVector(-angle.x, -angle.y, -angle.z));
-    rotateVector(force, new PVector(-angle.x, -angle.y, -angle.z));
+    point = point.sub(position).rotate(angle.negative());
+    force = force.rotate(angle.negative());
 
-    PVector M = point.cross(force);
-    PVector W = M.copy()
-                 .sub(angularVelocity.cross(diagonalMult(J, angularVelocity)));
+    Vector M = point.cross(force);
+    Vector R = M.sub(angularVelocity.cross(diagonalMult(J, angularVelocity)));
+    accumulateRotations = accumulateRotations.add(R);
+  }
+
+  private void addFlowedFace(Face face){
+    // face.draw();
+
+    Vector center = VectorAverage(face.vertexes[0], face.vertexes[1], face.vertexes[2]);
+    float height = water.getHeightNear(center.x, center.y) - center.z;
     
-    accumulateAngularVelocity.add(W);
+    Vector force = face.normal.negative()
+                              .mult(water.density)
+                              .mult(world.gravity)
+                              .mult(relu(height))
+                              .mult(face.area())
+                              .reluZ();
+
+    addForce(center, force);
   }
-
-  private PVector diagonalMult(float[][] matrix, PVector a){
-    return new PVector(matrix[0][0] * a.x, matrix[1][1] * a.y, matrix[2][2] * a.z);
-  }
-
-  private void drawTriangle(PVector u, PVector v, PVector k){
-    noStroke();
-    beginShape();
-        vertex(u.x, u.y, u.z);
-        vertex(v.x, v.y, v.z);
-        vertex(k.x, k.y, k.z);
-    endShape();
-  }
-
-  public void draw(){
-    accumulateForce.set(0, 0, 0);
-    accumulateAngularVelocity.set(0, 0, 0);
-
+  
+  private void waterlation(){
     for(Face face : frame){
-      PVector[] vertexes = face.copy().vertexes;
-
-      for(PVector v: vertexes){
-        v.z -= water.getHeightNear(v.x, v.y);
+      final Vector[] vertexes = face.vertexes;
+      
+      float[] z = new float[3];
+      for(int i = 0; i < 3; i++){
+        z[i] = vertexes[i].z - water.getHeightNear(vertexes[i].x, vertexes[i].y);
       }
-
       Integer[] indexes = new Integer[]{0, 1, 2};
-      Arrays.sort(indexes, (Integer ia, Integer ib) -> (vertexes[ia].z < vertexes[ib].z? -1 : 1));
+      Arrays.sort(indexes, (Integer ia, Integer ib) -> (z[ia] < z[ib]? -1 : 1));
+      
+      Vector L = vertexes[indexes[0]];
+      Vector M = vertexes[indexes[1]];
+      Vector H = vertexes[indexes[2]];
 
-      PVector U = vertexes[indexes[0]];
-      PVector V = vertexes[indexes[1]];
-      PVector W = vertexes[indexes[2]];
+      float hl = z[indexes[0]];
+      float hm = z[indexes[1]];
+      float hh = z[indexes[2]];
 
-      face.vertexes = new PVector[]{face.vertexes[indexes[0]], face.vertexes[indexes[1]], face.vertexes[indexes[2]]};
-
-      if(W.z < 0){
+      if(hh < 0){
         addFlowedFace(face);
       }
 
-      else if(U.z > 0){
+      else if(hl > 0){
         continue;
       }
 
-      else if(V.z < 0){
-        PVector VW = PVector.lerp(face.vertexes[1], face.vertexes[2], -V.z / (W.z - V.z));
-        PVector UW = PVector.lerp(face.vertexes[0], face.vertexes[2], -U.z / (W.z - U.z));
+      else if(hm < 0){
+        Vector MI = VectorLerp(M, H, -hm / (hh - hm));
+        Vector LI = VectorLerp(L, H, -hl / (hh - hl));
 
-        addFlowedFace(new Face(face.vertexes[0], face.vertexes[1], VW, face.normal));
-        addFlowedFace(new Face(UW, VW, face.vertexes[0], face.normal));
+        addFlowedFace(new Face(L, M, MI, face.normal));
+        addFlowedFace(new Face(MI, LI, L, face.normal));
       }
 
       else{
-        PVector UV = PVector.lerp(face.vertexes[0], face.vertexes[1], -U.z / (V.z - U.z));
-        PVector UW = PVector.lerp(face.vertexes[0], face.vertexes[2], -U.z / (W.z - U.z)); 
+        Vector MJ = VectorLerp(L, M, -hl / (hm - hl)); 
+        Vector HJ = VectorLerp(L, H, -hl / (hh - hl));
 
-        addFlowedFace(new Face(face.vertexes[0], UV, UW, face.normal));
+        addFlowedFace(new Face(L, MJ, HJ, face.normal));
       }
     }
+  }
+  
+  private void summarizeForce(){
+      Vector vectorGravity = VectorZ(-world.gravity);
+      Vector acceleration = accumulateForce.div(mass)
+                                           .add(vectorGravity)
+                                           .mult(dt);
 
-    addForce(this.thrust.point, this.thrust.force);
-    println(this.thrust.point, this.thrust.force);
-    
-    {
-      PVector vectorGravity = new PVector(0, 0, -world.gravity);
-      PVector acceleration = accumulateForce.copy()
-                                            .div(mass)
-                                            .add(vectorGravity)
-                                            .mult(dt);
+      velocity = velocity.add(acceleration)
+                         .mult(1 - velocityAttenuation);
 
-      velocity.add(acceleration)
-              .mult(1 - velocityAttenuation);
-
-      PVector positionShift = velocity.copy()
-                                      .mult(dt);
+      Vector positionShift = velocity.mult(dt);
 
       translateShip(positionShift);
-    } 
+  }
+  
+  private void summarizeRotation(){
+    Vector angularAcceleration = diagonalMult(invJ, accumulateRotations).mult(dt);
 
-    {
-      PVector angularAcceleration = diagonalMult(invJ, accumulateAngularVelocity).mult(dt)
-                                                                                 .mult(0.1);
+    angularVelocity = angularVelocity.add(angularAcceleration)
+                                     .mult(1 - angularAttenuation);
+    
+    
+    Vector angularShift = angularVelocity.mult(dt)
+                                         .rotate(angle.negative());
+    rotateShip(angularShift);
+  }
 
-      angularVelocity.add(angularAcceleration)
-                     .mult(1 - angularAttenuation);
-
-      PVector angularShift = angularVelocity.copy()
-                                            .mult(dt);
-
-      rotateVector(angularShift, angle);
-      rotateShip(angularShift);
-    }
-
+  public void draw(){
+    accumulateReset();
+    waterlation();
+    engineUpdate();
+    summarizeForce();
+    summarizeRotation();
     frame.draw();
   }
 }

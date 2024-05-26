@@ -72,8 +72,14 @@ class Water implements Drawable{
       }
     }
   }
-  
+  public void randomSplash(){
+    if((int)random(64) == -int(mousePressed)){
+      splash(random(world.landscapeWidth), random(world.landscapeHeight), random(10, 20));
+    }
+  }
   public void draw(){
+    randomSplash();
+
     for(int i=1;i<vertexWidth-1;i++){
       for(int j=1;j<vertexHeight-1;j++){
 
