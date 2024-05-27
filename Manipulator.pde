@@ -57,7 +57,7 @@ class Manipulator extends Thread{
                 ny = serial.read();
                 nx = serial.read();
 
-                if(ny == -1) continue;
+                if(ny < 2) continue;
                 
                 changeSupport.firePropertyChange("getInput", null, null);
             }

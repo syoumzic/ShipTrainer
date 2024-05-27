@@ -5,7 +5,8 @@ import java.beans.*;
 class Ship implements Drawable, PropertyChangeListener{
   private final float mass;
   private final float dt;
-  private final float thrustForceValue;
+  private final float thrustForceMove;
+  private final float thrustForceRotate;
   private final float velocityAttenuation, angularAttenuation;
 
   private final Water water;
@@ -16,15 +17,16 @@ class Ship implements Drawable, PropertyChangeListener{
   private final float[][] J, invJ;
 
   private Vector angle, enginePosition, position, velocity, angularVelocity, accumulateForce, accumulateRotations;
-  private Force thrustForce;
-  private float thrustRotate;
+  private Vector thrustForce;
+  private Vector thrustRotate;
 
   private float accumulateFloatArea;
   private float shipArea;
 
   Ship(World world, Water water){
     this.mass = 0.1; //kg
-    this.thrustForceValue = 0.5; //N
+    this.thrustForceMove = 0.01;
+    this.thrustForceRotate = 3;
     this.dt = 1/60f;
     this.velocityAttenuation = 0.4f;
     this.angularAttenuation = 0.4f;
@@ -35,8 +37,8 @@ class Ship implements Drawable, PropertyChangeListener{
     this.angularVelocity = new Vector(0, 0, 0);
     this.enginePosition = new Vector(-0.2, 0, 0);
     
-    this.thrustForce = new Force();
-    this.thrustRotate = 0;
+    this.thrustForce = new Vector();
+    this.thrustRotate = new Vector();
 
     J = new float[][]{{0.00207997, 0, 0},
                       {0, 0.00020449, 0},
@@ -51,19 +53,23 @@ class Ship implements Drawable, PropertyChangeListener{
 
     this.frame = new Model(getShape("frame"));
     this.body = getShape("ship");
-    translateShip(new Vector(2.03529, 1.86403, -0.05));
+    translateShip(new Vector(2.03529, 1.86403, 0));
+  }
+
+  private void accumulateReset(){  
+    accumulateForce = new Vector();
+    accumulateRotations = new Vector();
   }
 
   private void engineUpdate(){
-    addForce(thrustForce.point, thrustForce.force);
-    accumulateRotations = accumulateRotations.add(VectorZ(thrustRotate));
+    translateShip(thrustForce);
+    rotateShip(thrustRotate);
   }
   
   private void applyThrustForce(float nx, float ny){
-    float acrossLength = relu(map(ny, 160, 255, 0, thrustForceValue));
-    Vector acrossForce = VectorX(acrossLength).rotateZ(angle.z);
-    this.thrustForce = new Force(new Vector(enginePosition.x, enginePosition.y, position.z), acrossForce);
-    this.thrustRotate = map(nx, 155, 255, 0, 1) * this.thrustForce.force.mag();
+    float acrossLength = map(ny, 160, 255, 0, thrustForceMove);
+    thrustForce = VectorX(acrossLength).rotateZ(angle.z);
+    thrustRotate = VectorZ(map(nx, 155, 255, 0, thrustForceRotate * acrossLength));
   }
   
   public void propertyChange(PropertyChangeEvent evt) {
@@ -83,35 +89,28 @@ class Ship implements Drawable, PropertyChangeListener{
     frame.translate(new Vector(-position.x, -position.y, -position.z));
     frame.rotate(angularShift);
     frame.translate(new Vector(position.x, position.y, position.z));
-
-    enginePosition = enginePosition.sub(position)
-                                   .rotate(angularShift)
-                                   .add(position);
-  }
-
-  private void accumulateReset(){  
-    accumulateForce = new Vector();
-    accumulateRotations = new Vector();
   }
 
   //force задана в ск1 point тоже
   private void addForce(Vector point, Vector force){
-    // new Force(point, force).draw();
-
     accumulateForce = accumulateForce.add(force);
 
-    point = point.sub(position).rotate(angle.negative());
-    force = force.rotate(angle.negative());
+    point = point.sub(position)
+                 .rotateX(-angle.x)
+                 .rotateY(-angle.y);
+
+    force = force.rotateX(-angle.x)
+                 .rotateY(-angle.y);
 
     Vector M = point.cross(force);
     Vector R = M.sub(angularVelocity.cross(diagonalMult(J, angularVelocity)));
     accumulateRotations = accumulateRotations.add(R);
+
+    // new Force(point, force).draw();
   }
 
   private void addFlowedFace(Face face){
     // face.draw();
-    accumulateFloatArea += face.area();
-
     Vector center = VectorAverage(face.vertexes[0], face.vertexes[1], face.vertexes[2]);
     float height = water.getHeightNear(center.x, center.y) - center.z;
     
@@ -167,12 +166,12 @@ class Ship implements Drawable, PropertyChangeListener{
         addFlowedFace(new Face(L, MJ, HJ, face.normal));
       }
     }
-
-    addForce(position.add(VectorZ(1)), VectorZ(-world.gravity * mass));
   }
   
   private void summarizeForce(){
+      Vector gravityVector = VectorZ(-world.gravity);
       Vector acceleration = accumulateForce.div(mass)
+                                           .add(gravityVector)
                                            .mult(dt);
 
       velocity = velocity.add(acceleration)
@@ -190,22 +189,19 @@ class Ship implements Drawable, PropertyChangeListener{
 
     angularVelocity = angularVelocity.add(angularAcceleration)
                                      .mult(1 - angularAttenuation);
-
-    angularVelocity = VectorLerp(angularVelocity, angle.negative(), 0.1);
     
     
-    Vector angularShift = angularVelocity.mult(dt)
-                                         .rotate(angle.negative());
+    Vector angularShift = angularVelocity.mult(dt);
 
     rotateShip(angularShift);
   }
 
   public void draw(){
     accumulateReset();
-    waterlation();
     engineUpdate();
+    waterlation();
     summarizeForce();
-    // summarizeRotation();
+    summarizeRotation();
     frame.draw();
   }
 }

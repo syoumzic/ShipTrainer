@@ -26,6 +26,7 @@ public class Face{
 
     public void draw(){
         stroke(#000000, 100);
+        fill(#ffffff);
         beginShape();
         {
             vertex(vertexes[0].x, vertexes[0].y, vertexes[0].z);
