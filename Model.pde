@@ -3,12 +3,15 @@ import java.lang.Iterable;
 
 public class Model implements Iterable<Face>{
     private List<Face> faces;
+    private float S;
     
     public Model(PShape shapes){
         this.faces = new ArrayList<Face>(shapes.getChildCount());
-
+        this.S = 0.0f;
         for(PShape shape : shapes.getChildren()){
-            this.faces.add(new Face(shape));
+            Face face = new Face(shape);
+            S += face.area();
+            this.faces.add(face);
         }
     }
 

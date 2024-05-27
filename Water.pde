@@ -94,8 +94,8 @@ class Water implements Drawable{
       }
     }
 
-    stroke(0, 50);
-    noFill();
+    noStroke();
+    fill(waterColor);
 
     for(int i = 1;i < vertexWidth-1; i++){
       beginShape(TRIANGLE_STRIP);
