@@ -1,19 +1,36 @@
-public World world;
+import processing.opengl.*;
 
-void setup(){
-  fullScreen(P3D);
-  world = new World();
+public World world;
+public Manipulator manipulator;
+
+public void setup(){
+  size(1280, 720, OPENGL);
+  manipulator = new Manipulator(this);
+  manipulator.start();
+  world = new World(this, manipulator);
 }
 
-void draw(){
-  world.update();
+public void draw(){
+   if(!manipulator.connected()){
+     manipulator.reconnect(this);
+   }
   world.draw();
 }
 
-void keyPressed(){
-  Keyboard.keyPressed(keyCode);
+public void mouseWheel(MouseEvent event){
+  world.mouseWheel(event);
 }
 
-void keyReleased(){
-  Keyboard.keyReleased(keyCode);
+@Override
+public void exit(){
+  manipulator.exit();
+  super.exit();
+}
+
+public PShape getShape(String name){
+  return loadShape("assets/%s/%s.obj".formatted(name, name));
+}
+
+public float relu(float value){
+  return value > 0? value : 0; 
 }
